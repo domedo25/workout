@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>주 4일 루틴</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi7KO8IDTsnbwg66Oo7YuxIiwic2hvcnRfbmFtZSI6Iuy0iOughCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTBhMGYiLCJ0aGVtZV9jb2xvciI6IiMwYTBhMGYifQ==">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  background: #0a0a0f; color: #f0f0f0;
+  min-height: 100vh; min-height: 100dvh;
+  overflow-x: hidden;
+}
+input, textarea, button { font-family: inherit; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Screens */
+.screen { display:none; min-height:100vh; min-height:100dvh; }
+.screen.active { display:block; }
+
+/* Home */
+.home-header {
+  padding: 52px 24px 20px;
+  background: linear-gradient(180deg, #16162a 0%, #0a0a0f 100%);
+}
+.home-header h1 { font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+.home-header p { font-size:14px; color:#888; margin-top:6px; }
+
+.day-card {
+  display:flex; align-items:center; width:100%;
+  background:#141420; border:1px solid #222238;
+  border-radius:14px; padding:18px; margin-bottom:12px;
+  cursor:pointer; text-align:left; transition:transform 0.12s;
+}
+.day-card:active { transform:scale(0.97); }
+.day-icon {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  margin-right:14px; flex-shrink:0; font-size:15px; font-weight:800;
+}
+.day-card-body { flex:1; }
+.day-card-title { font-size:17px; font-weight:700; }
+.day-card-sub { font-size:12px; color:#777; margin-top:3px; }
+.day-card-arrow { flex-shrink:0; opacity:0.3; font-size:18px; color:#fff; }
+
+.rules-card {
+  background:#141420; border:1px solid #222238;
+  border-radius:14px; padding:18px 20px; margin-bottom:12px;
+}
+.rules-title { font-size:14px; font-weight:700; margin-bottom:10px; }
+.rules-body { font-size:13px; color:#aaa; line-height:1.9; }
+.rules-warn { margin-top:8px; border-top:1px solid #222238; padding-top:8px; color:#e94560; font-size:12px; }
+
+.history-btn {
+  width:100%; padding:16px; background:#1a1a2e; border:1px solid #2a2a44;
+  border-radius:14px; color:#aaa; font-size:14px; font-weight:600; cursor:pointer;
+}
+.history-btn:active { background:#222240; }
+
+/* Workout View */
+.workout-header {
+  position:sticky; top:0; z-index:10;
+  padding: 48px 20px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.back-btn {
+  background:rgba(255,255,255,0.2); border:none; border-radius:10px;
+  padding:8px 14px; color:#fff; font-size:14px; font-weight:600; cursor:pointer;
+}
+.back-btn:active { background:rgba(255,255,255,0.3); }
+.workout-header-right { text-align:right; }
+.workout-header-day { font-size:20px; font-weight:800; }
+.workout-header-sub { font-size:13px; opacity:0.85; }
+
+.ex-card {
+  background:#141420; border:1px solid #222238;
+  border-radius:14px; padding:16px; margin-bottom:12px;
+}
+.ex-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.ex-name { font-size:16px; font-weight:700; }
+.ex-badge {
+  font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px;
+}
+.ex-start { font-size:12px; color:#777; margin-bottom:10px; }
+
+.set-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.set-num { font-size:12px; color:#555; font-weight:600; width:24px; text-align:center; flex-shrink:0; }
+.set-inputs { display:flex; align-items:center; gap:6px; flex:1; }
+.input-kg, .input-reps, .input-free {
+  padding:10px 12px; background:#0d0d18; border:1px solid #2a2a44;
+  border-radius:10px; color:#f0f0f0; font-size:15px; outline:none;
+  text-align:center;
+}
+.input-kg { flex:1; }
+.input-reps { flex:1; }
+.input-free { width:100%; text-align:left; }
+.set-x { color:#555; font-size:13px; }
+
+.input-kg:focus, .input-reps:focus, .input-free:focus,
+.memo-input:focus, .extra-input:focus {
+  border-color: #444466;
+}
+
+.extra-card {
+  background:#141420; border:1px dashed #333350;
+  border-radius:14px; padding:16px; margin-bottom:12px;
+}
+.extra-label { font-size:14px; font-weight:600; color:#777; margin-bottom:10px; }
+.extra-input {
+  width:100%; padding:10px 14px; background:#0d0d18; border:1px solid #2a2a44;
+  border-radius:10px; color:#f0f0f0; font-size:14px; outline:none; margin-bottom:8px;
+}
+
+.memo-card {
+  background:#141420; border:1px solid #222238;
+  border-radius:14px; padding:16px; margin-bottom:16px;
+}
+.memo-title { font-size:14px; font-weight:600; margin-bottom:8px; }
+.memo-input {
+  width:100%; padding:10px 14px; background:#0d0d18; border:1px solid #2a2a44;
+  border-radius:10px; color:#f0f0f0; font-size:14px; outline:none;
+  resize:none; line-height:1.5;
+}
+
+.save-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  padding:12px 16px 28px;
+  background:linear-gradient(0deg, #0a0a0f 60%, transparent);
+  z-index:20;
+}
+.save-btn {
+  width:100%; padding:16px; border:none; border-radius:14px;
+  color:#fff; font-size:17px; font-weight:700; cursor:pointer;
+  letter-spacing:0.5px; transition:background 0.3s, transform 0.1s;
+}
+.save-btn:active { transform:scale(0.97); }
+.save-btn.saved { background:#06d6a0 !important; }
+
+/* History */
+.hist-header {
+  position:sticky; top:0; z-index:10;
+  background:#141420; border-bottom:1px solid #222238;
+  padding:48px 20px 14px; display:flex; align-items:center; gap:14px;
+}
+.hist-header h2 { font-size:20px; font-weight:800; }
+.hist-empty { text-align:center; padding:60px 0; color:#555; }
+.hist-empty-icon { font-size:40px; margin-bottom:12px; }
+.hist-card {
+  background:#141420; border:1px solid #222238;
+  border-radius:14px; padding:16px 18px; margin-bottom:10px;
+}
+.hist-card-top { display:flex; justify-content:space-between; align-items:center; }
+.hist-card-title { font-size:15px; font-weight:700; }
+.hist-card-date { font-size:12px; color:#666; }
+.hist-tags { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+.hist-tag {
+  font-size:11px; color:#aaa; background:#1a1a2e;
+  border-radius:6px; padding:4px 8px;
+}
+.hist-tag b { font-weight:600; }
+.hist-extra { margin-top:8px; font-size:12px; color:#777; }
+.hist-memo { margin-top:6px; font-size:12px; color:#666; font-style:italic; }
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="home-screen" class="screen active">
+  <div class="home-header">
+    <h1>주 4일 루틴</h1>
+    <p>3대 300 목표 · <span id="session-count">0</span>회 기록</p>
+  </div>
+  <div style="padding:8px 16px" id="day-cards"></div>
+  <div style="padding:0 16px">
+    <div class="rules-card">
+      <div class="rules-title">⚙️ 규칙</div>
+      <div class="rules-body">
+        ✔ 성공 → <span style="color:#06d6a0;font-weight:600">+2.5kg</span><br>
+        ✘ 실패 → 그대로 반복
+        <div class="rules-warn">❌ 데드 매일 금지 · ❌ 턱걸이 실패 금지 · ❌ 루틴 바꾸지 말기</div>
+      </div>
+    </div>
+    <button class="history-btn" onclick="showHistory()">📋 기록 히스토리 보기</button>
+  </div>
+  <div style="height:32px"></div>
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div id="workout-screen" class="screen">
+  <div class="workout-header" id="workout-header">
+    <button class="back-btn" onclick="showHome()">← 뒤로</button>
+    <div class="workout-header-right">
+      <div class="workout-header-day" id="wk-day"></div>
+      <div class="workout-header-sub" id="wk-sub"></div>
+    </div>
+  </div>
+  <div style="padding:12px 16px" id="workout-body"></div>
+  <div style="height:90px"></div>
+  <div class="save-bar">
+    <button class="save-btn" id="save-btn" onclick="saveWorkout()">💾 기록 저장</button>
+  </div>
+</div>
+
+<!-- HISTORY SCREEN -->
+<div id="history-screen" class="screen">
+  <div class="hist-header">
+    <button class="back-btn" style="background:#222238" onclick="showHome()">←</button>
+    <h2>기록 히스토리</h2>
+  </div>
+  <div style="padding:12px 16px" id="history-body"></div>
+</div>
+
+<script>
+const ROUTINE = [
+  { day:1, title:"스쿼트", color:"#e94560", exercises:[
+    {name:"스쿼트",sets:5,reps:"5",startKg:75,type:"normal"},
+    {name:"레그프레스",sets:3,reps:"10",startKg:0,type:"normal"},
+    {name:"레그컬",sets:3,reps:"12",startKg:0,type:"normal"},
+    {name:"플랭크",sets:1,reps:"—",startKg:0,type:"bodyweight"},
+  ]},
+  { day:2, title:"벤치 + 삼두", color:"#4ea8de", exercises:[
+    {name:"벤치프레스",sets:5,reps:"5",startKg:60,type:"normal"},
+    {name:"인클라인 벤치",sets:3,reps:"8~10",startKg:0,type:"normal"},
+    {name:"케이블 플라이",sets:3,reps:"12",startKg:0,type:"normal"},
+    {name:"푸시다운",sets:4,reps:"12",startKg:0,type:"normal"},
+    {name:"오버헤드 트라이셉",sets:4,reps:"12",startKg:0,type:"normal"},
+  ]},
+  { day:3, title:"데드", color:"#06d6a0", exercises:[
+    {name:"데드리프트",sets:3,reps:"5",startKg:80,type:"normal"},
+    {name:"바벨로우",sets:4,reps:"8",startKg:0,type:"normal"},
+    {name:"랫풀다운",sets:3,reps:"10",startKg:0,type:"normal"},
+    {name:"백익스텐션",sets:1,reps:"—",startKg:0,type:"bodyweight"},
+  ]},
+  { day:4, title:"등 + 이두", color:"#f0a500", exercises:[
+    {name:"턱걸이",sets:6,reps:"3/3/2/2/2/2",startKg:0,type:"chinup"},
+    {name:"시티드 로우",sets:3,reps:"12",startKg:0,type:"normal"},
+    {name:"해머컬",sets:4,reps:"10",startKg:0,type:"normal"},
+    {name:"인클라인 컬",sets:3,reps:"10",startKg:0,type:"normal"},
+  ]},
+];
+
+const COLORS_LIGHT = {"#e94560":"#e9456018","#4ea8de":"#4ea8de18","#06d6a0":"#06d6a018","#f0a500":"#f0a50018"};
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem("workout-log-v2")) || {sessions:{}}; }
+  catch { return {sessions:{}}; }
+}
+function setData(d) { localStorage.setItem("workout-log-v2", JSON.stringify(d)); }
+function getToday() {
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+let currentDay = null;
+
+// === HOME ===
+function showHome() {
+  document.getElementById("home-screen").classList.add("active");
+  document.getElementById("workout-screen").classList.remove("active");
+  document.getElementById("history-screen").classList.remove("active");
+  renderHome();
+  window.scrollTo(0,0);
+}
+
+function renderHome() {
+  const data = getData();
+  document.getElementById("session-count").textContent = Object.keys(data.sessions).length;
+
+  const container = document.getElementById("day-cards");
+  container.innerHTML = "";
+  ROUTINE.forEach((r,i) => {
+    const card = document.createElement("div");
+    card.className = "day-card";
+    card.style.borderLeft = `4px solid ${r.color}`;
+    card.onclick = () => showWorkout(i);
+    card.innerHTML = `
+      <div class="day-icon" style="background:${COLORS_LIGHT[r.color]}; color:${r.color}">D${r.day}</div>
+      <div class="day-card-body">
+        <div class="day-card-title">${r.title}</div>
+        <div class="day-card-sub">${r.exercises.map(e=>e.name).join(" · ")}</div>
+      </div>
+      <div class="day-card-arrow">›</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// === WORKOUT ===
+function showWorkout(idx) {
+  currentDay = idx;
+  const r = ROUTINE[idx];
+  const today = getToday();
+  const key = `${today}-day${r.day}`;
+  const data = getData();
+  const existing = data.sessions[key] || null;
+
+  document.getElementById("home-screen").classList.remove("active");
+  document.getElementById("history-screen").classList.remove("active");
+  document.getElementById("workout-screen").classList.add("active");
+
+  const header = document.getElementById("workout-header");
+  header.style.background = r.color;
+  document.getElementById("wk-day").textContent = `DAY ${r.day}`;
+  document.getElementById("wk-sub").textContent = `${r.title} · ${today}`;
+
+  const saveBtn = document.getElementById("save-btn");
+  saveBtn.style.background = r.color;
+  saveBtn.textContent = "💾 기록 저장";
+  saveBtn.classList.remove("saved");
+
+  const body = document.getElementById("workout-body");
+  body.innerHTML = "";
+
+  // Exercise cards
+  r.exercises.forEach((ex, exIdx) => {
+    const card = document.createElement("div");
+    card.className = "ex-card";
+
+    const badgeText = ex.type==="chinup" ? "6세트" : ex.type==="bodyweight" ? "시간/횟수" : `${ex.sets}×${ex.reps}`;
+
+    let inputsHTML = "";
+    if (ex.type === "bodyweight") {
+      const val = existing?.sets?.[exIdx]?.[0]?.value || "";
+      inputsHTML = `<input class="input-free" type="text" placeholder="예: 60초 × 3세트" data-ex="${exIdx}" data-set="0" data-field="value" value="${esc(val)}">`;
+    } else if (ex.type === "chinup") {
+      const val = existing?.sets?.[exIdx]?.[0]?.value || "";
+      inputsHTML = `<input class="input-free" type="text" placeholder="예: 3/3/2/2/2/2" data-ex="${exIdx}" data-set="0" data-field="value" value="${esc(val)}">`;
+    } else {
+      for (let s=0; s<ex.sets; s++) {
+        const kg = existing?.sets?.[exIdx]?.[s]?.kg || "";
+        const reps = existing?.sets?.[exIdx]?.[s]?.reps || "";
+        inputsHTML += `
+          <div class="set-row">
+            <span class="set-num">${s+1}</span>
+            <div class="set-inputs">
+              <input class="input-kg" type="number" inputmode="decimal" placeholder="kg" data-ex="${exIdx}" data-set="${s}" data-field="kg" value="${esc(kg)}">
+              <span class="set-x">×</span>
+              <input class="input-reps" type="number" inputmode="numeric" placeholder="회" data-ex="${exIdx}" data-set="${s}" data-field="reps" value="${esc(reps)}">
+            </div>
+          </div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="ex-header">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-badge" style="color:${r.color};background:${COLORS_LIGHT[r.color]}">${badgeText}</div>
+      </div>
+      ${ex.startKg > 0 ? `<div class="ex-start">시작 무게: ${ex.startKg}kg</div>` : ""}
+      ${inputsHTML}
+    `;
+    body.appendChild(card);
+  });
+
+  // Extra exercise
+  const extraCard = document.createElement("div");
+  extraCard.className = "extra-card";
+  extraCard.innerHTML = `
+    <div class="extra-label">+ 추가 종목</div>
+    <input class="extra-input" id="extra-name" type="text" placeholder="종목명 (예: 사이드 레터럴 레이즈)" value="${esc(existing?.extra?.name||"")}">
+    <input class="extra-input" id="extra-value" type="text" placeholder="세트/무게 기록 (예: 3×12 @ 8kg)" value="${esc(existing?.extra?.value||"")}">
+  `;
+  body.appendChild(extraCard);
+
+  // Memo
+  const memoCard = document.createElement("div");
+  memoCard.className = "memo-card";
+  memoCard.innerHTML = `
+    <div class="memo-title">📝 메모</div>
+    <textarea class="memo-input" id="workout-memo" rows="2" placeholder="컨디션, 특이사항 등">${esc(existing?.memo||"")}</textarea>
+  `;
+  body.appendChild(memoCard);
+
+  window.scrollTo(0,0);
+}
+
+function esc(s) { return String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+function saveWorkout() {
+  const r = ROUTINE[currentDay];
+  const today = getToday();
+  const key = `${today}-day${r.day}`;
+
+  const sets = r.exercises.map((ex, exIdx) => {
+    if (ex.type === "bodyweight" || ex.type === "chinup") {
+      const input = document.querySelector(`[data-ex="${exIdx}"][data-set="0"][data-field="value"]`);
+      return [{ value: input?.value || "" }];
+    }
+    const result = [];
+    for (let s=0; s<ex.sets; s++) {
+      const kgInput = document.querySelector(`[data-ex="${exIdx}"][data-set="${s}"][data-field="kg"]`);
+      const repsInput = document.querySelector(`[data-ex="${exIdx}"][data-set="${s}"][data-field="reps"]`);
+      result.push({ kg: kgInput?.value||"", reps: repsInput?.value||"" });
+    }
+    return result;
+  });
+
+  const data = getData();
+  data.sessions[key] = {
+    date: today,
+    day: r.day,
+    title: r.title,
+    sets,
+    memo: document.getElementById("workout-memo")?.value || "",
+    extra: {
+      name: document.getElementById("extra-name")?.value || "",
+      value: document.getElementById("extra-value")?.value || "",
+    },
+  };
+  setData(data);
+
+  const btn = document.getElementById("save-btn");
+  btn.textContent = "✔ 저장 완료!";
+  btn.classList.add("saved");
+  setTimeout(() => {
+    btn.textContent = "💾 기록 저장";
+    btn.classList.remove("saved");
+    btn.style.background = r.color;
+  }, 2000);
+}
+
+// === HISTORY ===
+function showHistory() {
+  document.getElementById("home-screen").classList.remove("active");
+  document.getElementById("workout-screen").classList.remove("active");
+  document.getElementById("history-screen").classList.add("active");
+  renderHistory();
+  window.scrollTo(0,0);
+}
+
+function renderHistory() {
+  const data = getData();
+  const body = document.getElementById("history-body");
+  const sessions = Object.entries(data.sessions).sort(([a],[b]) => b.localeCompare(a));
+
+  if (sessions.length === 0) {
+    body.innerHTML = `
+      <div class="hist-empty">
+        <div class="hist-empty-icon">📝</div>
+        <div style="font-size:15px">아직 기록이 없어요</div>
+        <div style="font-size:13px;margin-top:6px;color:#444">운동 시작하면 여기에 쌓여요!</div>
+      </div>`;
+    return;
+  }
+
+  const dayColors = {1:"#e94560",2:"#4ea8de",3:"#06d6a0",4:"#f0a500"};
+
+  body.innerHTML = sessions.map(([key, session]) => {
+    const color = dayColors[session.day] || "#888";
+    const routine = ROUTINE.find(r => r.day === session.day);
+
+    const tags = (session.sets||[]).map((exSets, ei) => {
+      const exInfo = routine?.exercises[ei];
+      if (!exInfo) return "";
+      let summary = "—";
+      if (exInfo.type === "bodyweight" || exInfo.type === "chinup") {
+        summary = exSets[0]?.value || "—";
+      } else {
+        const filled = exSets.filter(s => s.kg);
+        if (filled.length > 0) {
+          const maxKg = Math.max(...filled.map(s => parseFloat(s.kg)||0));
+          summary = `${maxKg}kg`;
+        }
+      }
+      return `<div class="hist-tag">${exInfo.name} <b style="color:${color}">${summary}</b></div>`;
+    }).join("");
+
+    const extraHTML = session.extra?.name ? `<div class="hist-extra">+ ${esc(session.extra.name)}: ${esc(session.extra.value)}</div>` : "";
+    const memoHTML = session.memo ? `<div class="hist-memo">📝 ${esc(session.memo)}</div>` : "";
+
+    return `
+      <div class="hist-card" style="border-left:4px solid ${color}">
+        <div class="hist-card-top">
+          <div class="hist-card-title">DAY ${session.day} · ${session.title}</div>
+          <div class="hist-card-date">${session.date}</div>
+        </div>
+        <div class="hist-tags">${tags}</div>
+        ${extraHTML}
+        ${memoHTML}
+      </div>`;
+  }).join("");
+}
+
+// Init
+renderHome();
+</script>
+</body>
+</html>
