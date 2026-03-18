@@ -21,11 +21,9 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }
 
-/* Screens */
 .screen { display:none; min-height:100vh; min-height:100dvh; }
 .screen.active { display:block; }
 
-/* Home */
 .home-header {
   padding: 52px 24px 20px;
   background: linear-gradient(180deg, #16162a 0%, #0a0a0f 100%);
@@ -64,7 +62,6 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 .history-btn:active { background:#222240; }
 
-/* Workout View */
 .workout-header {
   position:sticky; top:0; z-index:10;
   padding: 48px 20px 14px;
@@ -144,7 +141,6 @@ input[type="number"] { -moz-appearance: textfield; }
 .save-btn:active { transform:scale(0.97); }
 .save-btn.saved { background:#06d6a0 !important; }
 
-/* History */
 .hist-header {
   position:sticky; top:0; z-index:10;
   background:#141420; border-bottom:1px solid #222238;
@@ -156,7 +152,9 @@ input[type="number"] { -moz-appearance: textfield; }
 .hist-card {
   background:#141420; border:1px solid #222238;
   border-radius:14px; padding:16px 18px; margin-bottom:10px;
+  cursor:pointer; transition:transform 0.12s;
 }
+.hist-card:active { transform:scale(0.98); }
 .hist-card-top { display:flex; justify-content:space-between; align-items:center; }
 .hist-card-title { font-size:15px; font-weight:700; }
 .hist-card-date { font-size:12px; color:#666; }
@@ -168,6 +166,46 @@ input[type="number"] { -moz-appearance: textfield; }
 .hist-tag b { font-weight:600; }
 .hist-extra { margin-top:8px; font-size:12px; color:#777; }
 .hist-memo { margin-top:6px; font-size:12px; color:#666; font-style:italic; }
+.hist-export-bar { display:flex; gap:8px; margin-bottom:12px; }
+.hist-export-btn {
+  flex:1; padding:12px; background:#1a1a2e; border:1px solid #2a2a44;
+  border-radius:10px; color:#aaa; font-size:13px; font-weight:600; cursor:pointer;
+  text-align:center;
+}
+.hist-export-btn:active { background:#222240; }
+
+.modal-overlay {
+  display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.85); z-index:100;
+  align-items:flex-end; justify-content:center;
+}
+.modal-overlay.active { display:flex; }
+.modal-sheet {
+  background:#141420; border-radius:20px 20px 0 0;
+  width:100%; max-width:500px; max-height:85vh;
+  overflow-y:auto; padding:20px 20px 32px;
+  animation: slideUp 0.25s ease-out;
+}
+@keyframes slideUp {
+  from { transform:translateY(100%); }
+  to { transform:translateY(0); }
+}
+.modal-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 16px; }
+.modal-title { font-size:18px; font-weight:800; margin-bottom:4px; }
+.modal-date { font-size:13px; color:#666; margin-bottom:16px; }
+.modal-ex { margin-bottom:14px; }
+.modal-ex-name { font-size:14px; font-weight:700; margin-bottom:6px; }
+.modal-set-row { display:flex; gap:8px; align-items:center; padding:4px 0; font-size:13px; color:#aaa; }
+.modal-set-num { color:#555; font-weight:600; width:24px; }
+.modal-set-val { color:#f0f0f0; font-weight:600; }
+.modal-btns { display:flex; gap:8px; margin-top:20px; }
+.modal-btn {
+  flex:1; padding:14px; border:none; border-radius:12px;
+  font-size:14px; font-weight:700; cursor:pointer; text-align:center;
+}
+.modal-btn:active { transform:scale(0.97); }
+.modal-btn-close { background:#222238; color:#aaa; }
+.modal-btn-delete { background:#e9456020; color:#e94560; }
 </style>
 </head>
 <body>
@@ -215,7 +253,20 @@ input[type="number"] { -moz-appearance: textfield; }
     <button class="back-btn" style="background:#222238" onclick="showHome()">←</button>
     <h2>기록 히스토리</h2>
   </div>
-  <div style="padding:12px 16px" id="history-body"></div>
+  <div style="padding:12px 16px">
+    <div class="hist-export-bar">
+      <button class="hist-export-btn" onclick="exportHistory()">📋 텍스트로 복사</button>
+    </div>
+    <div id="history-body"></div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="closeModalOutside(event)">
+  <div class="modal-sheet" id="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
 </div>
 
 <script>
@@ -261,7 +312,6 @@ function getToday() {
 
 let currentDay = null;
 
-// === HOME ===
 function showHome() {
   document.getElementById("home-screen").classList.add("active");
   document.getElementById("workout-screen").classList.remove("active");
@@ -273,7 +323,6 @@ function showHome() {
 function renderHome() {
   const data = getData();
   document.getElementById("session-count").textContent = Object.keys(data.sessions).length;
-
   const container = document.getElementById("day-cards");
   container.innerHTML = "";
   ROUTINE.forEach((r,i) => {
@@ -293,7 +342,6 @@ function renderHome() {
   });
 }
 
-// === WORKOUT ===
 function showWorkout(idx) {
   currentDay = idx;
   const r = ROUTINE[idx];
@@ -319,11 +367,9 @@ function showWorkout(idx) {
   const body = document.getElementById("workout-body");
   body.innerHTML = "";
 
-  // Exercise cards
   r.exercises.forEach((ex, exIdx) => {
     const card = document.createElement("div");
     card.className = "ex-card";
-
     const badgeText = ex.type==="chinup" ? "6세트" : ex.type==="bodyweight" ? "시간/횟수" : `${ex.sets}×${ex.reps}`;
 
     let inputsHTML = "";
@@ -360,7 +406,6 @@ function showWorkout(idx) {
     body.appendChild(card);
   });
 
-  // Extra exercise
   const extraCard = document.createElement("div");
   extraCard.className = "extra-card";
   extraCard.innerHTML = `
@@ -370,7 +415,6 @@ function showWorkout(idx) {
   `;
   body.appendChild(extraCard);
 
-  // Memo
   const memoCard = document.createElement("div");
   memoCard.className = "memo-card";
   memoCard.innerHTML = `
@@ -378,7 +422,6 @@ function showWorkout(idx) {
     <textarea class="memo-input" id="workout-memo" rows="2" placeholder="컨디션, 특이사항 등">${esc(existing?.memo||"")}</textarea>
   `;
   body.appendChild(memoCard);
-
   window.scrollTo(0,0);
 }
 
@@ -477,7 +520,7 @@ function renderHistory() {
     const memoHTML = session.memo ? `<div class="hist-memo">📝 ${esc(session.memo)}</div>` : "";
 
     return `
-      <div class="hist-card" style="border-left:4px solid ${color}">
+      <div class="hist-card" style="border-left:4px solid ${color}" onclick="showDetail('${key}')">
         <div class="hist-card-top">
           <div class="hist-card-title">DAY ${session.day} · ${session.title}</div>
           <div class="hist-card-date">${session.date}</div>
@@ -487,6 +530,136 @@ function renderHistory() {
         ${memoHTML}
       </div>`;
   }).join("");
+}
+
+// === DETAIL MODAL ===
+function showDetail(key) {
+  const data = getData();
+  const session = data.sessions[key];
+  if (!session) return;
+
+  const dayColors = {1:"#e94560",2:"#4ea8de",3:"#06d6a0",4:"#f0a500"};
+  const color = dayColors[session.day] || "#888";
+  const routine = ROUTINE.find(r => r.day === session.day);
+
+  let exercisesHTML = "";
+  (session.sets||[]).forEach((exSets, ei) => {
+    const exInfo = routine?.exercises[ei];
+    if (!exInfo) return;
+
+    let setsHTML = "";
+    if (exInfo.type === "bodyweight" || exInfo.type === "chinup") {
+      const val = exSets[0]?.value || "—";
+      setsHTML = `<div class="modal-set-row"><span class="modal-set-val">${esc(val)}</span></div>`;
+    } else {
+      exSets.forEach((s, si) => {
+        const kg = s.kg || "—";
+        const reps = s.reps || "—";
+        setsHTML += `
+          <div class="modal-set-row">
+            <span class="modal-set-num">${si+1}</span>
+            <span class="modal-set-val">${kg}kg × ${reps}회</span>
+          </div>`;
+      });
+    }
+
+    exercisesHTML += `
+      <div class="modal-ex">
+        <div class="modal-ex-name" style="color:${color}">${exInfo.name}</div>
+        ${setsHTML}
+      </div>`;
+  });
+
+  const extraHTML = session.extra?.name ? `<div class="modal-ex"><div class="modal-ex-name" style="color:#777">+ ${esc(session.extra.name)}</div><div class="modal-set-row"><span class="modal-set-val">${esc(session.extra.value)}</span></div></div>` : "";
+  const memoHTML = session.memo ? `<div style="margin-top:12px;padding:10px 12px;background:#0d0d18;border-radius:8px;font-size:13px;color:#888">📝 ${esc(session.memo)}</div>` : "";
+
+  document.getElementById("modal-content").innerHTML = `
+    <div class="modal-title">DAY ${session.day} · ${session.title}</div>
+    <div class="modal-date">${session.date}</div>
+    ${exercisesHTML}
+    ${extraHTML}
+    ${memoHTML}
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-close" onclick="closeModal()">닫기</button>
+      <button class="modal-btn modal-btn-delete" onclick="deleteSession('${key}')">🗑 삭제</button>
+    </div>
+  `;
+
+  document.getElementById("detail-modal").classList.add("active");
+}
+
+function closeModal() {
+  document.getElementById("detail-modal").classList.remove("active");
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById("detail-modal")) closeModal();
+}
+
+function deleteSession(key) {
+  if (!confirm("이 기록을 삭제할까요?")) return;
+  const data = getData();
+  delete data.sessions[key];
+  setData(data);
+  closeModal();
+  renderHistory();
+  renderHome();
+}
+
+// === EXPORT ===
+function exportHistory() {
+  const data = getData();
+  const sessions = Object.entries(data.sessions).sort(([a],[b]) => b.localeCompare(a));
+
+  if (sessions.length === 0) {
+    alert("내보낼 기록이 없어요!");
+    return;
+  }
+
+  let text = "🏋️ 운동 기록\n\n";
+
+  sessions.forEach(([key, session]) => {
+    const routine = ROUTINE.find(r => r.day === session.day);
+    text += `📅 ${session.date} — DAY ${session.day} ${session.title}\n`;
+
+    (session.sets||[]).forEach((exSets, ei) => {
+      const exInfo = routine?.exercises[ei];
+      if (!exInfo) return;
+
+      if (exInfo.type === "bodyweight" || exInfo.type === "chinup") {
+        text += `  ${exInfo.name}: ${exSets[0]?.value || "—"}\n`;
+      } else {
+        const details = exSets.map((s,si) => `${s.kg||"—"}kg×${s.reps||"—"}`).join(", ");
+        text += `  ${exInfo.name}: ${details}\n`;
+      }
+    });
+
+    if (session.extra?.name) text += `  + ${session.extra.name}: ${session.extra.value}\n`;
+    if (session.memo) text += `  📝 ${session.memo}\n`;
+    text += "\n";
+  });
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("클립보드에 복사했어요!\n메모앱에 붙여넣기 하세요.");
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  alert("클립보드에 복사했어요!\n메모앱에 붙여넣기 하세요.");
 }
 
 // Init
